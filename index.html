@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristische Webseite</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: #c9d1d9;  /* Leichtes Grau für den Text */
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;  /* Mindesthöhe 100vh, um das Scrollen zu ermöglichen */
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2em;
+            text-align: center; /* Zentriert den Inhalt */
+        }
+
+        .clock {
+            font-size: 1.5em;
+            color: #c9d1d9;
+            margin-bottom: 0.5em;
+        }
+
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 2em;
+            color: #ffffff;
+            position: relative;
+            display: inline-block;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -10px;
+            height: 3px;
+            background: rgba(200, 200, 200, 0.3); /* Sichtbarer Strich */
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 1s ease-out;
+            animation: lineIn 1s forwards;
+        }
+
+        @keyframes lineIn {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+
+        .add-panel-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #21262d;
+            color: #c9d1d9;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s;
+            z-index: 1000;
+        }
+
+        .add-panel-button:hover {
+            background: #30363d;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2em; /* Abstand zwischen den Panels */
+            justify-content: center; /* Zentriert das Grid */
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5em;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s forwards;
+            position: relative;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOutDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        .panel-title {
+            font-size: 1.5em;
+            color: #ffffff;
+        }
+
+        .panel-description {
+            font-size: 1em;
+            color: #8b949e;
+            margin: 0.5em 0 1.5em 0;
+        }
+
+        .panel-link {
+            display: inline-flex;
+            align-items: center;
+            color: #c9d1d9; /* Heller als der Hintergrund */
+            font-size: 1em;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .panel-link:hover {
+            color: #ffffff;
+        }
+
+        .link-icon {
+            margin-left: 0.5em;
+            transition: transform 0.3s ease;
+        }
+
+        .panel-link:hover .link-icon {
+            transform: translateX(5px);
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #45494e; /* Helleres Grau als der Hintergrund */
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .delete-button:hover {
+            background: #5a5e63;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="clock" class="clock"></div>
+        <button id="add-panel-button" class="add-panel-button">+</button>
+        <h1 class="title">Willkommen in der Zukunft</h1>
+        <div class="panels" id="panels"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addPanelButton = document.getElementById('add-panel-button');
+            const panelsContainer = document.getElementById('panels');
+            const clock = document.getElementById('clock');
+
+            // Load panels from localStorage
+            const savedPanels = JSON.parse(localStorage.getItem('panels')) || [];
+            savedPanels.forEach(panel => {
+                createPanel(panel.title, panel.description, panel.linkHref);
+            });
+
+            addPanelButton.addEventListener('click', () => {
+                createPanel('New Panel', 'Description for the new panel.', '#');
+                savePanels();
+            });
+
+            function createPanel(title, description, linkHref) {
+                const panel = document.createElement('div');
+                panel.classList.add('panel');
+                panel.innerHTML = `
+                    <h2 class="panel-title" ondblclick="editContent(this)">${title}</h2>
+                    <p class="panel-description" ondblclick="editContent(this)">${description}</p>
+                    <a href="${linkHref}" class="panel-link" ondblclick="editLink(this)">Link <span class="link-icon">→</span></a>
+                    <button class="delete-button" onclick="deletePanel(this)">×</button>
+                `;
+                panelsContainer.appendChild(panel);
+            }
+
+            window.editContent = function(element) {
+                const originalText = element.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = originalText;
+                input.style.width = '100%';
+
+                input.addEventListener('blur', () => {
+                    element.textContent = input.value;
+                    element.style.display = '';
+                    savePanels();
+                });
+
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        element.textContent = input.value;
+                        element.style.display = '';
+                        savePanels();
+                    }
+                });
+
+                element.textContent = '';
+                element.appendChild(input);
+                input.focus();
+            };
+
+            window.editLink = function(element) {
+                const originalHref = element.getAttribute('href');
+                const inputHref = document.createElement('input');
+
+                inputHref.type = 'text';
+                inputHref.value = originalHref;
+                inputHref.style.width = '100%';
+
+                const container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.gap = '5px';
+
+                container.appendChild(inputHref);
+
+                inputHref.addEventListener('blur', () => {
+                    element.innerHTML = 'Link <span class="link-icon">→</span>';
+                    element.setAttribute('href', inputHref.value);
+                    element.style.display = '';
+                    savePanels();
+                });
+
+                inputHref.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        element.innerHTML = 'Link <span class="link-icon">→</span>';
+                        element.setAttribute('href', inputHref.value);
+                        element.style.display = '';
+                        savePanels();
+                    }
+                });
+
+                element.textContent = '';
+                element.appendChild(container);
+                inputHref.focus();
+            };
+
+            window.deletePanel = function(button) {
+                const panel = button.parentElement;
+                panel.style.animation = 'fadeOutDown 0.5s forwards';
+                panel.addEventListener('animationend', () => {
+                    panel.remove();
+                    savePanels();
+                });
+            };
+
+            function savePanels() {
+                const panels = [];
+                document.querySelectorAll('.panel').forEach(panel => {
+                    const title = panel.querySelector('.panel-title').textContent;
+                    const description = panel.querySelector('.panel-description').textContent;
+                    const link = panel.querySelector('.panel-link');
+                    const linkHref = link.getAttribute('href');
+                    panels.push({ title, description, linkHref });
+                });
+                localStorage.setItem('panels', JSON.stringify(panels));
+            }
+
+            function updateClock() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                clock.textContent = `${hours}:${minutes}`;
+            }
+
+            updateClock();
+            setInterval(updateClock, 60000); // Aktualisiere die Uhr jede Minute
+        });
+    </script>
+</body>
+</html>
